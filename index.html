@@ -3,34 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Snow Effect</title>
+    <title>AR Snow Effect Without Marker</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
         }
-        #captureButton {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 10px;
-            background-color: white;
-            border: 1px solid black;
-            z-index: 10;
-        }
     </style>
 </head>
 <body>
 
-<button id="captureButton">拍照</button>
-
 <a-scene embedded arjs='sourceType: webcam;'>
-    <a-marker preset='hiro'>
-        <a-snow></a-snow> <!-- 自定義雪花組件 -->
-    </a-marker>
     <a-entity camera></a-entity>
+    <a-entity id="snow" position="0 1 -5"></a-entity> <!-- 雪花效果的位置 -->
 </a-scene>
 
 <script>
@@ -48,14 +35,10 @@
         }
     });
 
-    document.getElementById('captureButton').addEventListener('click', function () {
-        const scene = document.querySelector('a-scene');
-        scene.toDataURL('image/jpeg').then(function (dataUrl) {
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = 'captured_image.jpg';
-            link.click();
-        });
+    // 自動開始落雪效果
+    document.addEventListener('DOMContentLoaded', function () {
+        const snowEntity = document.getElementById('snow');
+        snowEntity.setAttribute('snow', '');
     });
 </script>
 
