@@ -70,7 +70,7 @@
         snowEntity.setAttribute('snow', 'count: 100'); // 設定雪花數量
     });
 
-    // 拍照功能
+ 
     document.getElementById('captureButton').addEventListener('click', function () {
         const scene = document.querySelector('a-scene');
         scene.toDataURL('image/jpeg').then(function (dataUrl) {
