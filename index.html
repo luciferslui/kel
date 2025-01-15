@@ -3,84 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Snow Effect with Camera</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>AR Snowfall Effect</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: black; /* 背景顏色 */
-        }
-        #captureButton {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 10px;
-            background-color: white;
-            border: 1px solid black;
-            z-index: 10; /* 確保按鈕在最上層 */
-        }
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
+    <video id="video" autoplay style="display:none;"></video>
+    <canvas id="canvas"></canvas>
+    <button id="capture">拍照</button>
+    <img id="photo" alt="Your photo will appear here." style="display:none;"/>
 
-<button id="captureButton">拍照</button>
-<a-scene embedded arjs='sourceType: webcam;'>
-    <a-entity camera></a-entity>
-    <a-entity id="snow" position="0 5 -5" snow></a-entity> <!-- 雪花效果的位置 -->
-</a-scene>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/AR.js"></script>
 
-<script>
-    AFRAME.registerComponent('snow', {
-        schema: {
-            count: {type: 'int', default: 100}
-        },
-        init: function () {
-            const el = this.el;
-            for (let i = 0; i < this.data.count; i++) {
-                const snowflake = document.createElement('a-sphere');
-                snowflake.setAttribute('radius', Math.random() * 0.02);
-                snowflake.setAttribute('position', `${Math.random() * 2 - 1} ${Math.random() * 2 + 5} ${Math.random() * -5}`);
-                snowflake.setAttribute('color', '#FFF');
-                el.appendChild(snowflake);
-                this.animateSnowflake(snowflake);
-            }
-        },
-        animateSnowflake: function (snowflake) {
-            const fallSpeed = Math.random() * 0.02 + 0.01; // 隨機掉落速度
-            const drop = () => {
-                let position = snowflake.getAttribute('position');
-                position.y -= fallSpeed;
-                if (position.y < -1) { // 當雪花掉出視野時重置位置
-                    position.y = Math.random() * 5 + 5;
-                    position.x = Math.random() * 2 - 1;
-                    position.z = Math.random() * -5;
-                }
-                snowflake.setAttribute('position', position);
-                requestAnimationFrame(drop); // 繼續動畫
-            };
-            drop();
+    <script>
+        // 获取视频流
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(err => {
+                console.error("Error accessing camera: ", err);
+            });
+
+        // 设置 Three.js 场景
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // 添加雪花效果
+        const snowGeometry = new THREE.Geometry();
+        for (let i = 0; i < 1000; i++) {
+            const snowflake = new THREE.Vector3(
+                Math.random() * 200 - 100,
+                Math.random() * 200 - 100,
+                Math.random() * 200 - 100
+            );
+            snowGeometry.vertices.push(snowflake);
         }
-    });
 
-    // 自動開始落雪效果
-    document.addEventListener('DOMContentLoaded', function () {
-        const snowEntity = document.getElementById('snow');
-        snowEntity.setAttribute('snow', 'count: 100'); // 設定雪花數量
-    });
+        const snowMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+        const snowflakes = new THREE.Points(snowGeometry, snowMaterial);
+        scene.add(snowflakes);
 
- 
-    document.getElementById('captureButton').addEventListener('click', function () {
-        const scene = document.querySelector('a-scene');
-        scene.toDataURL('image/jpeg').then(function (dataUrl) {
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = 'captured_image.jpg';
-            link.click();
+        camera.position.z = 5;
+
+        // 动画渲染
+        const animate = function () {
+            requestAnimationFrame(animate);
+            snowflakes.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        // 拍照功能
+        document.getElementById('capture').addEventListener('click', function () {
+            const canvas = document.getElementById('canvas');
+            const photo = document.getElementById('photo');
+            photo.style.display = 'block';
+            photo.src = canvas.toDataURL('image/png');
         });
-    });
-</script>
-
+    </script>
 </body>
 </html>
