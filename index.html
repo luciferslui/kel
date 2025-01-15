@@ -3,61 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Snow Effect Without Marker</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>全螢幕雪花效果</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            background-color: #000; /* 背景顏色 */
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1; /* 確保canvas在背景 */
         }
     </style>
 </head>
 <body>
 
-<a-scene embedded arjs='sourceType: webcam;'>
-    <a-entity camera></a-entity>
-    <a-entity id="snow" position="0 5 -5" snow></a-entity> <!-- 雪花效果的位置 -->
-</a-scene>
+<canvas id="snowCanvas"></canvas>
 
 <script>
-    AFRAME.registerComponent('snow', {
-        schema: {
-            count: {type: 'int', default: 100}
-        },
-        init: function () {
-            const el = this.el;
-            for (let i = 0; i < this.data.count; i++) {
-                const snowflake = document.createElement('a-sphere');
-                snowflake.setAttribute('radius', Math.random() * 0.02);
-                snowflake.setAttribute('position', `${Math.random() * 2 - 1} ${Math.random() * 2 + 5} ${Math.random() * -5}`);
-                snowflake.setAttribute('color', '#FFF');
-                snowflake.setAttribute('dynamic-body', 'mass: 0'); // 設置為動態物體以便於掉落
-                el.appendChild(snowflake);
-                this.animateSnowflake(snowflake);
-            }
-        },
-        animateSnowflake: function (snowflake) {
-            const fallSpeed = Math.random() * 0.02 + 0.01; // 隨機掉落速度
-            const drop = () => {
-                let position = snowflake.getAttribute('position');
-                position.y -= fallSpeed;
-                if (position.y < -1) { // 當雪花掉出視野時重置位置
-                    position.y = Math.random() * 5 + 5;
-                    position.x = Math.random() * 2 - 1;
-                    position.z = Math.random() * -5;
-                }
-                snowflake.setAttribute('position', position);
-                requestAnimationFrame(drop); // 繼續動畫
-            };
-            drop();
-        }
-    });
+    const canvas = document.getElementById('snowCanvas');
+    const ctx = canvas.getContext('2d');
 
-    // 自動開始落雪效果
-    document.addEventListener('DOMContentLoaded', function () {
-        const snowEntity = document.getElementById('snow');
-        snowEntity.setAttribute('snow', 'count: 10000'); // 設定雪花數量
+    // 設置畫布大小
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // 雪花數量
+    const snowflakes = [];
+    const numSnowflakes = 100;
+
+    // 雪花類別
+    class Snowflake {
+        constructor() {
+            this.x = Math.random() * canvas.width; // 隨機x位置
+            this.y = Math.random() * canvas.height; // 隨機y位置
+            this.radius = Math.random() * 4 + 2; // 隨機半徑
+            this.speed = Math.random() * 1 + 0.5; // 隨機速度
+        }
+
+        update() {
+            this.y += this.speed; // 更新y位置
+            if (this.y > canvas.height) { // 如果超出畫布底部，重置位置
+                this.y = -this.radius;
+                this.x = Math.random() * canvas.width;
+            }
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'white'; // 雪花顏色
+            ctx.fill();
+        }
+    }
+
+    // 創建雪花
+    for (let i = 0; i < numSnowflakes; i++) {
+        snowflakes.push(new Snowflake());
+    }
+
+    // 動畫循環
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空畫布
+
+        for (const snowflake of snowflakes) {
+            snowflake.update(); // 更新雪花位置
+            snowflake.draw(); // 繪製雪花
+        }
+
+        requestAnimationFrame(animate); // 繼續動畫循環
+    }
+
+    animate(); // 開始動畫
+
+    // 當視窗大小改變時，更新畫布大小
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     });
 </script>
 
